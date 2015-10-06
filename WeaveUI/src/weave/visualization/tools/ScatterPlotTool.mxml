@@ -22,6 +22,8 @@
 			   >
 	<mx:Script>
 		<![CDATA[
+			import mx.controls.Alert;
+			import weave.api.core.ILinkableObject;
 			import mx.controls.CheckBox;
 			
 			import weave.Weave;
@@ -99,6 +101,21 @@
 			override public function initSelectableAttributes(input:Array):void
 			{
 				ColumnUtils.initSelectableAttributes([plotter.dataX, plotter.dataY, plotter.fill.color], input);
+			}
+			
+			override protected function handleToggleButtonClick():void {
+				var name:String = WeaveAPI.globalHashMap.generateUniqueName("Histogram");
+				var object:ILinkableObject = WeaveAPI.globalHashMap.requestObject(name, HistogramTool, false);
+				
+				// put panel in front
+				WeaveAPI.globalHashMap.setNameOrder([name]);
+				
+				var tool:HistogramTool = object as HistogramTool;
+				tool.move(this.x, this.y);
+				if (tool) {
+					var arr:Array = [this.plotter.dataX];
+					tool.initSelectableAttributes(arr);
+				}
 			}
 			
 			private function handleChildrenChildList():void

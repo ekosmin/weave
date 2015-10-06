@@ -125,6 +125,7 @@
 			public const userControlButton:Button = new Button();
 			public const subMenuButton:MenuButton = new MenuButton();
 			public const attributeButton:Button = new Button();
+			public const toggleButton:Button = new Button();
 			protected const minimizeButton:Button = new Button();
 			protected const maximizeButton:Button = new Button();
 			protected const closePanelButton:Button = new Button();
@@ -252,6 +253,7 @@
 				setupControlButton(userControlButton, [_userControlIcon, _userControlIcon2, _userControlIcon], toggleControlPanel, TOOLTIP_CONTROLS);
 				setupControlButton(subMenuButton, null, null, TOOLTIP_SUBMENU);
 				setupControlButton(attributeButton, _attributeIcon, handleAttributeButtonClick, TOOLTIP_ATTRIBUTES);
+				setupControlButton(toggleButton, _attributeIcon, handleToggleButtonClick, TOOLTIP_TOGGLE);
 				setupControlButton(zOrderButton, [icon_zOrder, icon_zOrderReverse, icon_zOrder], null);
 				setupControlButton(minimizeButton, _minimizeIcon, handleMinimizeButtonClick, TOOLTIP_MINIMIZE);
 				setupControlButton(maximizeButton, _maximizeIcon, toggleMaximized, TOOLTIP_MAXIMIZE);
@@ -324,6 +326,7 @@
 						enableSubMenu.value ? subMenuButton.menu.getMenuItems() : null,
 						{label: lang(TOOLTIP_CONTROLS), shown: shouldShowUserControlButton, click: toggleControlPanel},
 						{label: lang(TOOLTIP_ATTRIBUTES), shown: shouldShowAttributeButton, click: handleAttributeButtonClick},
+						{label: lang(TOOLTIP_TOGGLE), shown: shouldShowAttributeButton, click: handleToggleButtonClick},
 						WeaveMenuItem.TYPE_SEPARATOR,
 						{label: lang(TOOLTIP_ZORDER_MENU), shown: enableZOrder, children: zOrderButton.menu.getMenuItems},
 						{label: lang(TOOLTIP_MINIMIZE), shown: minimizable, click: minimized},
@@ -1387,7 +1390,7 @@
 			private function getLeftIconAreaWidth():int
 			{
 				var w:int = buttonOffsetFromSide;
-				for each (var button:Button in [userControlButton, subMenuButton, attributeButton])
+				for each (var button:Button in [userControlButton, subMenuButton, attributeButton, toggleButton])
 					if (button.parent)
 						w += buttonSize + spaceBetweenButtons;
 				return w;
@@ -1456,10 +1459,11 @@
 				var buttons:Array, conditions:Array, i:int, button:Button;
 				
 				// left side
-				buttons = [userControlButton, subMenuButton, attributeButton];
+				buttons = [userControlButton, subMenuButton, attributeButton, toggleButton];
 				conditions = [
 					shouldShowUserControlButton(),
 					enableSubMenu.value,
+					shouldShowAttributeButton(),
 					shouldShowAttributeButton()
 				];
 				for (i = 0; i < buttons.length; i++)
@@ -1567,6 +1571,10 @@
 			protected function handleAttributeButtonClick():void
 			{
 				openAttributeSelector();
+			}
+			
+			protected function handleToggleButtonClick():void {
+				Alert.show("Toggling");
 			}
 			
 			public function openAttributeSelector(attrIndex:int = 0):AttributeSelectorPanel
@@ -1727,6 +1735,7 @@
 			public static const TOOLTIP_CONTROLS:String = "Change settings";
 			public static const TOOLTIP_SUBMENU:String = "Menu";
 			public static const TOOLTIP_ATTRIBUTES:String = "Change attributes";
+			public static const TOOLTIP_TOGGLE:String = "Toggle graph";
 			public static const TOOLTIP_ZORDER:String = "Toggle always above or below";
 			public static const TOOLTIP_ZORDER_MENU:String = "Z-Order";
 			public static const TOOLTIP_MINIMIZE:String = "Minimize";

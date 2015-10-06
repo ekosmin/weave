@@ -21,10 +21,18 @@ package weave.menus
 	import flash.utils.getQualifiedClassName;
 	import flash.utils.getTimer;
 	
+	import mx.containers.TitleWindow;
 	import mx.controls.Button;
+	import mx.controls.Image;
+	import mx.controls.Label;
 	import mx.core.IToolTip;
 	import mx.core.UIComponent;
+	import mx.events.CloseEvent;
+	import mx.managers.PopUpManager;
 	import mx.managers.ToolTipManager;
+	
+	import spark.components.Group;
+	import spark.layouts.HorizontalLayout;
 	
 	import weave.Weave;
 	import weave.api.core.ICallbackCollection;
@@ -44,12 +52,87 @@ package weave.menus
 	import weave.ui.ProbeToolTipWindow;
 	import weave.ui.collaboration.CollaborationEditor;
 	import weave.utils.ColumnUtils;
+	import weave.visualization.tools.Histogram2DTool;
+	import weave.visualization.tools.HistogramTool;
+	import weave.visualization.tools.ScatterPlotTool;
+	import spark.layouts.VerticalLayout;
 
 	public class ToolsMenu extends WeaveMenuItem
 	{
 		private static function openStaticInstance(item:WeaveMenuItem):void
 		{
 			DraggablePanel.openStaticInstance(item.data as Class);
+		}
+		public static function openPopup():void
+		{
+			// create and configure the TitleWindow
+			var tw:TitleWindow = new TitleWindow();
+			tw.title = "Visualization Picker";
+			tw.showCloseButton = true;
+			tw.addEventListener(Event.CLOSE, closeTitleWindow);
+			// create and configure a Label
+			var label:Label = new Label();
+			label.text = "Select a visualization from below:";
+			// add images
+			var histo: Image = new Image();
+			histo.source = "histogram.png";
+			histo.addEventListener(MouseEvent.CLICK, makeHistogram);
+			histo.height = 64;
+			histo.width = 64;
+			
+			var scatter: Image = new Image();
+			scatter.source = "scatterplot.png";
+			scatter.addEventListener(MouseEvent.CLICK, makeScatter);
+			scatter.height = 64;
+			scatter.width = 64;
+			// image labels
+			var histoLabel:Label = new Label();
+			histoLabel.text = "Histogram";
+			
+			var scatterLabel:Label = new Label();
+			scatterLabel.text = "Scatter Plot";
+			// Graph combos
+			var histoGroup: Group = new Group();
+			histoGroup.layout = new VerticalLayout();
+			histoGroup.addElement(histo);
+			histoGroup.addElement(histoLabel);
+			
+			var scatterGroup: Group = new Group();
+			scatterGroup.layout = new VerticalLayout();
+			scatterGroup.addElement(scatter);
+			scatterGroup.addElement(scatterLabel);
+			// Image layout
+			var group: Group = new Group();
+			group.layout = new HorizontalLayout();
+			group.addElement(histoGroup);
+			group.addElement(scatterGroup);
+
+			// add the Label to the TitleWindow
+			tw.addChild(label);
+			tw.addChild(group);
+			// open the TitleWindow as a modal popup window
+			PopUpManager.addPopUp(tw, WeaveAPI.topLevelApplication as UIComponent);
+			PopUpManager.centerPopUp(tw);
+		}
+		// method to close the TitleWindow targeted by a close event
+		private static function closeTitleWindow(evt:CloseEvent):void {
+			PopUpManager.removePopUp(TitleWindow(evt.target));
+		}
+		private static function makeHistogram(evt:MouseEvent):void {
+			createGlobalObject(new WeaveMenuItem({
+				shown: Weave.properties.getMenuToggle(HistogramTool),
+				label: "Histogram",
+				click: createGlobalObject,
+				data: HistogramTool
+			}));
+		}
+		private static function makeScatter(evt:MouseEvent):void {
+			createGlobalObject(new WeaveMenuItem({
+				shown: Weave.properties.getMenuToggle(ScatterPlotTool),
+				label: "Scatter",
+				click: createGlobalObject,
+				data: ScatterPlotTool
+			}));
 		}
 		public static function createGlobalObject(item:WeaveMenuItem):ILinkableObject
 		{
@@ -91,6 +174,8 @@ package weave.menus
 				b = dp.subMenuButton;
 			if (!b.parent)
 				b = dp.attributeButton;
+			if (!b.parent)
+				b = dp.toggleButton;
 			
 			var color:uint = 0x0C4785;//0x0b333c;
 			var timeout:int = getTimer() + 1000 * 5;
@@ -123,13 +208,13 @@ package weave.menus
 		public static const staticItems:Array = createItems([
 			{
 				shown: [Weave.properties.showColorController],
-				label: lang("Color Controller"),
-				click: openStaticInstance,
-				data: ColorController
+				label: lang("Create Histogram"),
+				click: createGlobalObject,
+				data: HistogramTool
 			},{
 				shown: [Weave.properties.showProbeToolTipEditor],
-				label: lang("Edit Mouseover Info"),
-				click: openStaticInstance,
+				label: lang("Select Visualization"),
+				click: openPopup,
 				data: ProbeToolTipEditor
 			},{
 				shown: [Weave.properties.showProbeWindow],

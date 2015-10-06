@@ -137,15 +137,6 @@
 				</mx:HBox>
 			<ui:BinningDefinitionEditor id="binEditor" showNoneOption="false"/>
 		</mx:VBox>
-		<mx:VBox label="{lang('Advanced')}">
-			<mx:CheckBox id="showAverageColorData" label="{lang('Color by average data value instead of record count')}"
-						 creationComplete="linkBindableProperty(plotter.showAverageColorData, event.currentTarget, 'selected');"/>
-			<mx:HBox width="100%" verticalAlign="middle" enabled="{showAverageColorData.selected}">
-				<ui:DynamicColumnComponent id="colorColumnComponent" label="{lang('Color data')}"/>
-				<mx:Button label="{lang('Edit colors...')}" click="DraggablePanel.openStaticInstance(ColorController);"/>
-			</mx:HBox>
-			<ui:ColorRampEditor id="cRampEditor" enabled="{!showAverageColorData.selected}"/>
-		</mx:VBox>
 		<mx:Script>
 			<![CDATA[
 				import weave.api.linkBindableProperty;
@@ -159,11 +150,9 @@
 				{
 					super.childrenCreated();
 					
-					cRampEditor.colorRamp = plotter.binColors;
 					handleBinColRadioButtonChange();
 					xColumnComponent.dynamicObject = plotter.xColumn;
 					yColumnComponent.dynamicObject = plotter.yColumn;
-					colorColumnComponent.columnWrapper = plotter.colorColumn;
 				}
 				
 				private function handleBinColRadioButtonChange():void

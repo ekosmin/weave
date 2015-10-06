@@ -24,15 +24,27 @@
 		 layout="absolute">
 	<mx:Script>
 		<![CDATA[
+			import mx.controls.Alert;
+			import mx.core.DragSource;
+			import mx.managers.DragManager;
+			
+			import weave.api.core.ILinkableObject;
 			import weave.api.getCallbackCollection;
 			import weave.api.linkBindableProperty;
 			import weave.api.linkSessionState;
 			import weave.api.registerLinkableChild;
+			import weave.api.setSessionState;
+			import weave.api.ui.IInitSelectableAttributes;
+			import weave.api.ui.ISelectableAttributes;
 			import weave.api.ui.IVisTool;
 			import weave.api.unlinkSessionState;
+			import weave.core.LinkableBoolean;
 			import weave.core.LinkableNumber;
 			import weave.core.LinkableVariable;
+			import weave.menus.ToolsMenu;
+			import weave.menus.WeaveMenuItem;
 			import weave.ui.AttributeSelectorPanel;
+			import weave.ui.BasicLinkableLayoutManager;
 			import weave.ui.SelectableAttributesCheckBoxList;
 			import weave.utils.BitmapText;
 			import weave.utils.ColumnUtils;
@@ -62,13 +74,41 @@
 				getCallbackCollection(visualization.plotManager.zoomBounds).addGroupedCallback(this, updateAxisLabels);
 				getCallbackCollection(plotter).addGroupedCallback(this, updateAxisLabels, true);
 				
-				visualization.leftMarginClickCallbacks.addGroupedCallback(this, function():void { AttributeSelectorPanel.open(visualization.leftMarginColumn); });
+				visualization.leftMarginClickCallbacks.addGroupedCallback(this, makeHistogram );
 				visualization.bottomMarginClickCallbacks.addGroupedCallback(this, function():void { AttributeSelectorPanel.open(visualization.bottomMarginColumn); });
+				
+				ColumnUtils.getDataSources(visualization.leftMarginColumn);
 			}
-			
+			private function makeHistogram():void {
+				var name:String = this.name;
+				var object:ILinkableObject = WeaveAPI.globalHashMap.requestObject(name, ScatterPlotTool, false);
+				var tool:ScatterPlotTool = object as ScatterPlotTool;
+				
+				// put panel in front
+				WeaveAPI.globalHashMap.setNameOrder([name]);
+				
+				var arr:Array = [this.plotter.binnedColumn, this.plotter.binnedColumn, this.plotter.binnedColumn];
+				tool.initSelectableAttributes(arr);
+				
+				var dragSource:DragSource = new DragSource();
+				var mouseEvent:MouseEvent = new MouseEvent(MouseEvent.MOUSE_DOWN, true, false, 500, 500);
+				DragManager.doDrag(this, 
+					dragSource, 
+					mouseEvent, 
+					null, 
+					0 /*xOffset*/, 
+					0 /*yOffset*/, 
+					0.5 /*imageAlpha*/, 
+					true);
+				//WeaveAPI.globalHashMap.removeObject(this.name);
+			}
 			override public function initSelectableAttributes(input:Array):void
 			{
 				ColumnUtils.initSelectableAttributes([plotter.fillStyle.color], input);
+			}
+			
+			override protected function handleToggleButtonClick():void {
+				makeHistogram();
 			}
 			
 			public const attributesToIncludeInProbe:LinkableVariable = registerLinkableChild(this, new LinkableVariable(Array, null, null), handleAttributesToIncludeInProbe, true);
@@ -160,20 +200,7 @@
 	<editorFactory><mx:Component><ui:ControlPanel>
 		<mx:VBox label="{lang('Basic')}">
 			<ui:DynamicColumnComponent id="dataColumnComponent"/>
-			<ui:DynamicColumnComponent id="columnToAggregateComponent"/>
-			<ui:Indent label="{lang('Height aggregation method')}">
-				<ui:CustomComboBox id="agMethodCombo" dataProvider="{HistogramPlotter.ENUM_AGGREGATION_METHODS}" labelFunction="lang"
-								   creationComplete="linkBindableProperty(outerDocument.plotter.aggregationMethod, event.target, 'selectedItem');"/>
-			</ui:Indent>
 			<ui:BinningDefinitionEditor id="binEditor" showNoneOption="false"/>
-		</mx:VBox>
-		<mx:VBox label="{lang('Advanced')}">
-			<ui:CustomCheckBox label="{lang('Draw horizontal bars')}" creationComplete="linkBindableProperty(outerDocument.plotter.horizontalMode, event.target, 'selected');"/>
-			<mx:CheckBox id="drawPartialCheckBox"
-						 label="{lang('Draw partial histogram bars for selection and probe')}"
-						 creationComplete="linkBindableProperty(outerDocument.plotter.drawPartialBins, event.target, 'selected');"/>
-			<ui:SelectableAttributesCheckBoxList id="selectedAttrList" creationComplete="selectedAttrList.setup(outerDocument, outerDocument.attributesToIncludeInProbe)"/>
-			<ui:ColorRampEditor id="cRampEditor"/>
 		</mx:VBox>
 		<mx:Script>
 			<![CDATA[
@@ -185,9 +212,8 @@
 				{
 					super.childrenCreated();
 					var plotter:HistogramPlotter = outerDocument.plotter;
-					columnToAggregateComponent.dynamicObject = plotter.columnToAggregate;
 					plotter.columnToAggregate.addGroupedCallback(this, function():void {
-						agMethodCombo.enabled = plotter.columnToAggregate.getInternalColumn() != null;
+						//agMethodCombo.enabled = false;
 					}, true);
 					
 					plotter.fillStyle.color.internalDynamicColumn.addGroupedCallback(this, handleDynamicColorColumnChange, true);
@@ -205,11 +231,6 @@
 				{
 					if (!parent)
 						return callLater(handleDynamicColorColumnChange);
-					
-					if (outerDocument.plotter.internalColorColumn)
-						cRampEditor.colorRamp = outerDocument.plotter.internalColorColumn.ramp;
-					else
-						cRampEditor.colorRamp = null;
 					
 					binEditor.setTarget(outerDocument.plotter.binnedColumn);
 					dataColumnComponent.columnWrapper = outerDocument.plotter.fillStyle.color;
