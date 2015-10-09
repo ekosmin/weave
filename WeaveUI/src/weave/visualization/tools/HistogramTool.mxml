@@ -29,7 +29,11 @@
 			import mx.managers.DragManager;
 			
 			import weave.api.core.ILinkableObject;
+			import weave.api.data.IAttributeColumn;
+			import weave.api.data.IDataSource;
+			import weave.api.data.IQualifiedKey;
 			import weave.api.getCallbackCollection;
+			import weave.api.getLinkableDescendants;
 			import weave.api.linkBindableProperty;
 			import weave.api.linkSessionState;
 			import weave.api.registerLinkableChild;
@@ -41,6 +45,7 @@
 			import weave.core.LinkableBoolean;
 			import weave.core.LinkableNumber;
 			import weave.core.LinkableVariable;
+			import weave.data.AttributeColumns.ReferencedColumn;
 			import weave.menus.ToolsMenu;
 			import weave.menus.WeaveMenuItem;
 			import weave.ui.AttributeSelectorPanel;
@@ -87,20 +92,11 @@
 				// put panel in front
 				WeaveAPI.globalHashMap.setNameOrder([name]);
 				
-				var arr:Array = [this.plotter.binnedColumn, this.plotter.binnedColumn, this.plotter.binnedColumn];
+				var col:ReferencedColumn = getLinkableDescendants(this.children, ReferencedColumn)[0]
+				var arr:Array = [col, col, col];
 				tool.initSelectableAttributes(arr);
-				
-				var dragSource:DragSource = new DragSource();
-				var mouseEvent:MouseEvent = new MouseEvent(MouseEvent.MOUSE_DOWN, true, false, 500, 500);
-				DragManager.doDrag(this, 
-					dragSource, 
-					mouseEvent, 
-					null, 
-					0 /*xOffset*/, 
-					0 /*yOffset*/, 
-					0.5 /*imageAlpha*/, 
-					true);
-				//WeaveAPI.globalHashMap.removeObject(this.name);
+				ColumnUtils.getColumnsWithCommonKeyType();
+				this.handleEscapeKey();
 			}
 			override public function initSelectableAttributes(input:Array):void
 			{
