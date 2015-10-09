@@ -104,18 +104,18 @@
 			}
 			
 			override protected function handleToggleButtonClick():void {
-				var name:String = WeaveAPI.globalHashMap.generateUniqueName("Histogram");
+				//var name:String = WeaveAPI.globalHashMap.generateUniqueName("Histogram");
+				var name:String = this.name;
 				var object:ILinkableObject = WeaveAPI.globalHashMap.requestObject(name, HistogramTool, false);
 				
 				// put panel in front
 				WeaveAPI.globalHashMap.setNameOrder([name]);
 				
 				var tool:HistogramTool = object as HistogramTool;
-				tool.move(this.x, this.y);
-				if (tool) {
-					var arr:Array = [this.plotter.dataX];
-					tool.initSelectableAttributes(arr);
-				}
+				var arr:Array = [this.plotter.dataX];
+				tool.initSelectableAttributes(arr);
+				
+				this.handleEscapeKey();
 			}
 			
 			private function handleChildrenChildList():void
