@@ -274,10 +274,26 @@ package weave.visualization.plotters
 					if (isFinite(fillStyleParams[0]))
 						graphics.beginFill.apply(graphics, fillStyleParams);
 				}
-				graphics.drawRect(tempBounds.getXMin(), tempBounds.getYMin(), tempBounds.getWidth(), tempBounds.getHeight());
-				graphics.endFill();
+				
+				var itemHeight:Number = tempBounds.getHeight()/binHeight;
+				for (var j:int = 0; j < binHeight; j++) {
+					var rectX:Number = tempBounds.getXMin();
+					var rectY:Number = tempBounds.getYMin() + itemHeight * j;
+					var rectWidth:Number = tempBounds.getWidth() * .9;
+					var rectHeight:Number = itemHeight * .9;
+					this.customRect(graphics, keys, binIndex, task, rectX, rectY, rectWidth, rectHeight);
+					graphics.drawRect(rectX, rectY, rectWidth, rectHeight);
+					graphics.endFill();
+					
+					// flush the tempShape "buffer" onto the destination BitmapData.
+					task.buffer.draw(tempShape);
+				}
+				//graphics.drawRect(tempBounds.getXMin(), tempBounds.getYMin(), tempBounds.getWidth(), tempBounds.getHeight());
+//				this.drawRects(graphics, keys, binIndex, task, fillStyleParams, tempBounds.getXMin(), tempBounds.getYMin(), 
+//					tempBounds.getWidth(), tempBounds.getHeight(), binHeight);
+				//graphics.endFill();
 				// flush the tempShape "buffer" onto the destination BitmapData.
-				task.buffer.draw(tempShape);
+				//task.buffer.draw(tempShape);
 				
 				// draw value label
 				if (showValueLabels.value)
@@ -314,6 +330,39 @@ package weave.visualization.plotters
 			}
 			
 			return 1;
+		}
+		
+		private function drawRects(graphics:Graphics, keys:Array, binIndex:Number, task:IPlotTask,
+								   fillStyleParams:Array, x:Number, y:Number, width:Number, height:Number, binSize:Number):void {
+			var itemHeight:Number = height/binSize;
+			
+			for (var i:int = 0; i < binSize; i++) {
+				var rectX:Number = x;
+				var rectY:Number = itemHeight * i;
+				var rectWidth:Number = width;
+				var rectHeight:Number = itemHeight * .1;
+				this.customRect(graphics, keys, binIndex, task, rectX, rectY, rectWidth, rectHeight);
+			}
+		}
+		
+		private function customRect(graphics:Graphics, keys:Array, binIndex:Number, task:IPlotTask,
+				x:Number, y:Number, width:Number, height:Number):void {
+			// draw rectangle for bin
+			graphics.clear();
+			lineStyle.beginLineStyle(null, graphics);
+			var fillStyleParams:Array = fillStyle.getBeginFillParams(keys[0]);
+			if (fillStyleParams)
+			{
+				var colorBinCol:BinnedColumn = internalColorColumn ? internalColorColumn.getInternalColumn() as BinnedColumn : null;
+				if (colorBinCol && !colorBinCol.binningDefinition.internalObject)
+					fillStyleParams[0] = internalColorColumn.getColorFromDataValue(binIndex);
+				if (isFinite(fillStyleParams[0]))
+					graphics.beginFill.apply(graphics, fillStyleParams);
+			}
+			graphics.drawRect(x, y, width, height);
+			graphics.endFill();
+			// flush the tempShape "buffer" onto the destination BitmapData.
+			task.buffer.draw(tempShape);
 		}
 		
 		private const tempBounds:IBounds2D = new Bounds2D(); // reusable temporary object
